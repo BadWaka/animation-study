@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>初识 WebGL</title>
+</head>
+<body>
+<canvas id="glcanvas" width="640" height="480">
+    Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+</canvas>
+<script>
+    var gl;
+
+    function start() {
+        var canvas = document.getElementById('glcanvas');
+
+        gl = initWebGL(canvas);
+        console.log('gl', gl);
+
+        if (!gl) {
+            return;
+        }
+
+        // 设置清除色？
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        // 开启"深度测试"，Z-缓存???
+        gl.enable(gl.DEPTH_TEST);
+        // 设置深度测试，近的物体遮挡远的物体
+        gl.depthFunc(gl.LEQUAL);
+        // 清除颜色和深度缓存
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // 设置 webGL 的渲染分辨率
+        gl.viewport(0, 0, canvas.width, canvas.height);
+
+        console.log('gl.createProgram()', gl.createProgram());
+
+    }
+
+    /**
+     * 初始化 webGL 对象
+     * @param canvas
+     * @return {*}
+     */
+    function initWebGL(canvas) {
+        window.gl = null;
+
+        try {
+            gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (!gl) {
+            alert('WebGL初始化失败!');
+            gl = null;
+        }
+
+        return gl;
+    }
+
+    // 什么是着色器???
+
+    /**
+     * 初始化着色器
+     */
+    function initShaders() {
+        var fragmentShader = getShader(gl, 'shader-fs');    // 片段着色器
+        var vertexShader = getShader(gl, 'shader-vs');  // 顶点着色器
+
+        // 创建着色器程序
+        window.shaderProgram = gl.createProgram();
+        // 添加着色器
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        // 连接着色器程序
+        gl.linkProgram(shaderProgram);
+
+        // 判断创建着色器是否成功
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            // 不成功
+            alert('Unable to initialize the shader program.');
+        }
+
+        // 使用着色器程序
+        gl.useProgram(shaderProgram);
+
+        // 顶部位置属性？
+        window.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        // 开启顶部属性数组?
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+    }
+
+    /**
+     * 从 dom 中加载着色器
+     * 返回一个编译好的着色器程序
+     * 如果加载失败或者编译失败的话，会返回 null
+     * @param gl webGl 对象
+     * @param id domID
+     */
+    function getShader(gl, id) {
+        var shaderScript,   // 着色器 script 标签对象
+            theSource,  // 保存 script 对象中的所有文本节点的文本值
+            currentChild,   // 当前孩子
+            shader; // 着色器对象
+
+        shaderScript = document.getElementById(id);
+
+        if (!shaderScript) {
+            return null;
+        }
+
+        theSource = ''; // script 标签中的文本节点片段
+        currentChild = shaderScript.firstChild; // 从第一个孩子开始
+
+        // 循环
+        while (currentChild) {
+            // 如果是 TextNode 的话
+            if (currentChild.nodeType === currentChild.TEXT_NODE) {
+                // 把文本放到 theSource 对象里
+                theSource += currentChild.textContent;
+            }
+            currentChild = currentChild.nextSibling;
+        }
+
+        if (shaderScript.type === 'x-shader/x-fragment') {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        }
+    }
+
+    start();
+
+    console.log(getShader);
+
+</script>
+</body>
+</html>
